@@ -1,0 +1,3 @@
+"""
+Checks data types
+"""
