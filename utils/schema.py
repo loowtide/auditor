@@ -1,11 +1,12 @@
-from .type_infer import infer_column
-
 import re
+
 import pandas as pd
 
+from .type_infer import infer_column
 
-def check_column_names(df: pd.DataFrame) -> dict:
-    issues: dict[str, list[str]] = {}
+
+def check_column_names(df: pd.DataFrame) -> list:
+    issues: list[dict] = []
 
     for i, col in enumerate(df.columns):
         problems: list[str] = []
@@ -27,12 +28,12 @@ def check_column_names(df: pd.DataFrame) -> dict:
         if "  " in name:
             problems.append("Double spaces present")
 
-        # starts with a digit
-        if name[:1].isdigit():
+        # starts with a digit but leave out if all are digits
+        if name[:1].isdigit() and not name.isdigit():
             problems.append("Starts with a digit")
 
         # check special characters
-        special = set(re.findall(r"[^a-zA-Z0-9_]", name))
+        special = set(re.findall(r"[^a-zA-Z0-9_ ]", name))
         if special:
             problems.append(f"Special characters {sorted(special)}")
 
@@ -41,7 +42,7 @@ def check_column_names(df: pd.DataFrame) -> dict:
             problems.append(" Tab/Newline/nbsp char")
 
         if problems:
-            issues[f"[{i}] {name!r}"] = problems
+            issues.append({"index": i, "name": name, "problems": problems})
 
     return issues
 
@@ -50,7 +51,8 @@ def check_duplicate_names(df: pd.DataFrame) -> dict[str, list[int]]:
     seen: dict[str, list[int]] = {}
 
     for i, col in enumerate(df.columns):
-        seen.setdefault(col, []).append(i)
+        key = str(col)
+        seen.setdefault(key, []).append(i)
 
     return {col: idx for col, idx in seen.items() if len(idx) > 1}
 
@@ -60,12 +62,7 @@ def check_naming_convention(df: pd.DataFrame):
 
 
 # check column types -> user scheme
-def check_column_types(
-    df: pd.DataFrame, expected_types: dict[str, str] | None = None
-) -> dict | None:
-
-    if not expected_types:
-        return None
+def check_column_types(df: pd.DataFrame, expected_types: dict[str, str]) -> dict:
 
     cols = {c.lower(): c for c in df.columns}
     mismatches: dict[str, dict[str, str]] = {}
@@ -115,14 +112,16 @@ def validate_columns(df: pd.DataFrame, expected_cols: list[str]) -> dict:
 
 def check_schema(
     df: pd.DataFrame,
-    expected_cols: list[str] | None = None,
+    expected_columns: list[str] | None = None,
     expected_types: dict[str, str] | None = None,
 ) -> dict:
     return {
         "check_column_names": check_column_names(df),
-        "check_column_types": check_column_types(df, expected_types),
+        "check_column_types": check_column_types(df, expected_types)
+        if expected_types
+        else None,
         "check_duplicate_names": check_duplicate_names(df),
-        "validate_columns": validate_columns(df, expected_cols)
-        if expected_cols
+        "validate_columns": validate_columns(df, expected_columns)
+        if expected_columns
         else None,
     }
