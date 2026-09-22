@@ -1,7 +1,7 @@
 import pandas as pd
 
 
-def infer_column(series: pd.Series) -> str:
+def infer_column(series: pd.Series, categorical_threshold: float = 0.01) -> str:
     non_null = series.dropna()
 
     if non_null.empty:
@@ -16,16 +16,13 @@ def infer_column(series: pd.Series) -> str:
     if pd.api.types.is_numeric_dtype(series):
         return "numeric"
 
-    if pd.api.types.is_bool_dtype(series):
-        return "boolean"
-
     if pd.api.types.is_datetime64_any_dtype(series):
         return "datetime"
 
     if pd.api.types.is_object_dtype(series):
         unique_ratio = non_null.nunique() / len(non_null)
 
-        if unique_ratio < 0.05:
+        if unique_ratio < categorical_threshold:
             return "categorical"
 
         return "text"
