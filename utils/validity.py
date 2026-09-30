@@ -8,9 +8,12 @@ def check_numeric_range(
     max_value: float | None = None,
 ) -> dict:
     if column not in df.columns:
-        return {"status": "column_missing"}
+        return {"column":column,"status": "column_missing"}
 
     series = df[column]
+
+    if not pd.api.types.is_numeric_dtype(series):
+        return {"column":column,"status":"invalid_rule"}
 
     invalid = pd.Series(False, df.index)
 
@@ -34,7 +37,7 @@ def check_allowed_values(
     df: pd.DataFrame, column: str, allowed_values: list[str]
 ) -> dict:
     if column not in df.columns:
-        return {"status": "column_missing"}
+        return {"column":column,"status": "column_missing"}
 
     invalid = ~df[column].isin(allowed_values)
     invalid_count = int(invalid.sum())
@@ -49,7 +52,7 @@ def check_allowed_values(
 
 def check_pattern(df: pd.DataFrame, column: str, pattern: str) -> dict:
     if column not in df.columns:
-        return {"status": "column_missing"}
+        return {"column":column,"status": "column_missing"}
 
     series = df[column].dropna().astype(str)
 
@@ -94,7 +97,7 @@ def check_validity(df: pd.DataFrame, rules: list[dict]) -> list[dict]:
 
         if check == "range":
             result = check_numeric_range(
-                df, column, rule.get("min", 0), rule.get("max", 120)
+                df, column, rule.get("min"), rule.get("max")
             )
         elif check == "allowed_values":
             result = check_allowed_values(df, column, rule["values"])

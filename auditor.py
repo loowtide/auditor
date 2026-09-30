@@ -223,12 +223,12 @@ def extract_issues(report: dict) -> list[dict]:
                 }
             )
 
-        elif result["status"] == "missing_column":
+        elif result["status"] in ("invaid_rule","missing_column","unknown_rule"):
             issues.append(
                 {
                     "category": "validity",
                     "column_name": result.get("column"),
-                    "issue_type": "column_missing",
+                    "issue_type": result["status"],
                     "severity": "error",
                     "message": (
                         f"Validity rule references missing "

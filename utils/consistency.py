@@ -43,9 +43,9 @@ def check_cross_column_nullity(
     df: pd.DataFrame, source_column: str, required_column: str
 ) -> dict:
     if source_column not in df.columns:
-        return {"status": "column_missing", "column": source_column}
+        return {"status": "missing_column", "column": source_column}
     if required_column not in df.columns:
-        return {"status": "column_missing", "column": required_column}
+        return {"status": "missing_column", "column": required_column}
 
     invalid = df[source_column].notna() & df[required_column].isna()
 

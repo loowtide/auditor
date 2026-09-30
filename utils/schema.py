@@ -4,6 +4,18 @@ import pandas as pd
 
 from .type_infer import infer_column
 
+TYPE_ALIASES={
+    "date":"datetime",
+    "timestamp":"datetime",
+    "string":"text",
+    "str":"text",
+    "int":"numeric",
+    "float":"numeric",
+    "number":"numeric",
+    "bool":"boolean",
+    "category":"categorical"
+}
+
 
 def check_column_names(df: pd.DataFrame) -> list:
     issues: list[dict] = []
@@ -75,7 +87,8 @@ def check_column_types(df: pd.DataFrame, expected_types: dict[str, str]) -> dict
             continue
 
         actual_type = str(infer_column(df[real])).lower()
-        expected_type = str(value).lower()
+        expected_type=str(value).lower()
+        expected_type = TYPE_ALIASES.get(expected_type,expected_type)
 
         if actual_type != expected_type:
             mismatches[real] = {"expected": expected_type, "actual": actual_type}
